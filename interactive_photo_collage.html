@@ -1,0 +1,645 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mis vacaciones</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                        hand: ['Caveat', 'cursive'],
+                    },
+                    colors: {
+                        craft: {
+                            50: '#f8f2e9',
+                            100: '#f1e7d8',
+                            200: '#e5d6bf',
+                            800: '#6b5436',
+                            900: '#46331b',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Caveat:wght@500;600;700&family=Inter:wght@300;400;600;700&display=swap');
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #2a1d12;
+            background-image:
+                repeating-linear-gradient(90deg, rgba(0,0,0,.18) 0 1px, transparent 1px 46px),
+                repeating-linear-gradient(180deg, rgba(255,255,255,.02) 0 2px, transparent 2px 10px),
+                radial-gradient(ellipse at 50% 0%, rgba(110,72,35,.5), transparent 55%);
+            min-height: 100vh;
+            padding: 24px 16px;
+        }
+
+        /* Tablero central (hoja del collage) */
+        .page-board {
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            max-width: 72rem;
+            margin-inline: auto;
+            min-height: calc(100vh - 48px);
+            border-radius: 18px;
+            background:
+                radial-gradient(ellipse at 18% 0%, rgba(255,255,255,.8), transparent 48%),
+                radial-gradient(ellipse at 92% 100%, rgba(196,160,110,.28), transparent 46%),
+                repeating-linear-gradient(45deg, rgba(120,90,60,.03) 0 3px, transparent 3px 7px),
+                #f3ecdf;
+            box-shadow:
+                inset 0 1px 0 rgba(255,255,255,.12),
+                0 40px 80px -30px rgba(0,0,0,.65),
+                0 8px 24px rgba(0,0,0,.35);
+        }
+
+        .font-hand {
+            font-family: 'Caveat', cursive;
+        }
+
+        /* ---------- Fondo con stickers flotantes ---------- */
+        .bg-decor {
+            position: absolute;
+            inset: 0;
+            z-index: 0;
+            overflow: hidden;
+            border-radius: 18px;
+            pointer-events: none;
+        }
+
+        .sticker {
+            position: absolute;
+            font-size: 2.6rem;
+            opacity: .16;
+            filter: grayscale(.35) saturate(.8);
+            animation: floaty 8s ease-in-out infinite;
+            animation-delay: var(--fd, 0s);
+        }
+
+        @keyframes floaty {
+            0%, 100% { transform: translateY(0) rotate(var(--r, 0deg)); }
+            50%      { transform: translateY(-18px) rotate(calc(var(--r, 0deg) + 4deg)); }
+        }
+
+        /* ---------- Tarjetas Polaroid ---------- */
+        .collage-item {
+            --tilt: 0deg;
+            --tape: #fbbf24;
+            --delay: 0s;
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            background: #fff;
+            padding: 12px 12px 8px;
+            border-radius: 6px;
+            box-shadow: 0 1px 2px rgba(69,54,35,.12), 0 12px 26px -8px rgba(69,54,35,.2);
+            cursor: pointer;
+            outline: none;
+            opacity: 0;
+            transform: translateY(42px) rotate(var(--tilt)) scale(.96);
+            will-change: transform, opacity;
+        }
+
+        .collage-item.in-view {
+            opacity: 1;
+            transform: translateY(0) rotate(var(--tilt)) scale(1);
+            transition:
+                opacity .55s ease var(--delay, 0s),
+                transform .8s cubic-bezier(.22, 1, .36, 1) var(--delay, 0s);
+        }
+
+        .collage-item.done {
+            transition: transform .35s ease, box-shadow .35s ease;
+        }
+
+        .collage-item:hover,
+        .collage-item:focus-visible {
+            transform: rotate(0deg) translateY(-9px) scale(1.035);
+            box-shadow: 0 3px 6px rgba(69,54,35,.14), 0 26px 50px -12px rgba(69,54,35,.38);
+            z-index: 10;
+        }
+
+        /* Cinta washi */
+        .collage-item::before {
+            content: '';
+            position: absolute;
+            top: -12px;
+            left: 50%;
+            width: 112px;
+            height: 26px;
+            transform: translateX(-50%) rotate(-3deg);
+            background:
+                repeating-linear-gradient(90deg, rgba(255,255,255,.5) 0 9px, rgba(255,255,255,0) 9px 18px),
+                var(--tape);
+            box-shadow: 0 2px 5px rgba(0,0,0,.2);
+            opacity: .94;
+            z-index: 3;
+            pointer-events: none;
+        }
+
+        .media-wrap {
+            position: relative;
+            flex: 1;
+            min-height: 0;
+            overflow: hidden;
+            border-radius: 4px;
+            background: #dcd3c6;
+        }
+
+        .media-wrap img,
+        .media-wrap video {
+            position: absolute;
+            inset: 0;
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transition: transform .6s ease;
+        }
+
+        .collage-item:hover .media-wrap img,
+        .collage-item:hover .media-wrap video {
+            transform: scale(1.05);
+        }
+
+        .caption {
+            font-family: 'Caveat', cursive;
+            font-size: 1.3rem;
+            line-height: 1;
+            color: #4b4236;
+            text-align: center;
+            padding: 10px 4px 4px;
+        }
+
+        /* Chip expandir */
+        .expand-chip {
+            position: absolute;
+            right: 10px;
+            bottom: 10px;
+            z-index: 2;
+            width: 36px;
+            height: 36px;
+            border-radius: 9999px;
+            background: rgba(255,255,255,.92);
+            color: #4b4236;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: .8rem;
+            box-shadow: 0 4px 12px rgba(0,0,0,.22);
+            opacity: 0;
+            transform: translateY(8px) scale(.7);
+            transition: all .3s ease;
+        }
+
+        .collage-item:hover .expand-chip,
+        .collage-item:focus-visible .expand-chip {
+            opacity: 1;
+            transform: none;
+        }
+
+        /* Overlay de reproducción del video */
+        .video-play {
+            position: absolute;
+            inset: 0;
+            z-index: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: rgba(0,0,0,.12);
+            transition: background .3s ease;
+            pointer-events: none;
+        }
+
+        .video-play i {
+            font-size: 2.7rem;
+            color: #fff;
+            text-shadow: 0 3px 16px rgba(0,0,0,.55);
+            opacity: .9;
+            transition: transform .3s ease;
+        }
+
+        .collage-item:hover .video-play {
+            background: rgba(0,0,0,.35);
+        }
+
+        .collage-item:hover .video-play i {
+            transform: scale(1.18);
+        }
+
+        /* ---------- Rotación / cinta / delay por número ---------- */
+        .item-1 { --tilt: -1.6deg; --tape: #fbbf24; --delay: .08s; }
+        .item-2 { --tilt:  2.4deg; --tape: #f43f5e; --delay: .2s; }
+        .item-3 { --tilt: -1.4deg; --tape: #14b8a6; --delay: .32s; }
+        .item-4 { --tilt:  1.8deg; --tape: #8b5cf6; --delay: .44s; }
+        .item-5 { --tilt: -1.2deg; --tape: #0ea5e9; --delay: .56s; }
+
+        /* ---------- Grid ---------- */
+        @media (min-width: 768px) {
+            .collage-grid {
+                display: grid;
+                grid-template-columns: repeat(3, 1fr);
+                grid-auto-rows: 280px;
+                gap: 1.6rem;
+            }
+
+            .item-1 { grid-column: 1 / span 2; grid-row: 1 / span 2; }
+            .item-2 { grid-column: 3; grid-row: 1; }
+            .item-3 { grid-column: 3; grid-row: 2; }
+            .item-4 { grid-column: 1; grid-row: 3; }
+            .item-5 { grid-column: 2 / span 2; grid-row: 3; }
+        }
+
+        @media (max-width: 767px) {
+            .collage-grid {
+                display: grid;
+                grid-template-columns: 1fr;
+                grid-auto-rows: auto;
+                gap: 2rem;
+                padding-top: 1rem;
+            }
+
+            .collage-item {
+                height: auto;
+            }
+
+            .media-wrap {
+                height: min(330px, 52vh);
+            }
+        }
+
+        /* ---------- Modal ---------- */
+        #imageModal {
+            backdrop-filter: blur(10px);
+            transition: opacity .3s ease;
+        }
+
+        #modalImage,
+        #modalVideo {
+            transition: transform .3s cubic-bezier(.175, .885, .32, 1.275), opacity .3s ease;
+            max-height: 84vh;
+            max-width: 88vw;
+            object-fit: contain;
+            box-shadow: 0 30px 60px -15px rgba(0, 0, 0, .65);
+        }
+
+        .modal-btn {
+            color: #fff;
+            border-radius: 9999px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: rgba(255,255,255,.12);
+            border: 1px solid rgba(255,255,255,.18);
+            backdrop-filter: blur(4px);
+            transition: all .25s ease;
+        }
+        .modal-btn:hover {
+            background: rgba(255,255,255,.25);
+            transform: translateY(-2px);
+        }
+    </style>
+</head>
+<body class="text-slate-800">
+
+    <!-- Tablero del collage -->
+    <div class="page-board">
+
+    <!-- Fondo decorativo -->
+    <div class="bg-decor" aria-hidden="true">
+        <span class="sticker" style="top:12%; left:4%; --r:-12deg;">📸</span>
+        <span class="sticker" style="top:6%; right:6%; --r:10deg; --fd:1s;">🎞️</span>
+        <span class="sticker" style="top:60%; right:2%; --r:16deg; --fd:2s;">✨</span>
+        <span class="sticker" style="bottom:8%; left:3%; --r:-8deg; --fd:.5s;">🎴</span>
+        <span class="sticker" style="top:42%; left:48%; --r:4deg; --fd:3s; font-size:1.8rem;">🌿</span>
+        <span class="sticker" style="bottom:16%; right:22%; --r:-14deg; --fd:1.6s; font-size:1.9rem;">🍂</span>
+    </div>
+
+    <!-- Header -->
+    <header class="sticky top-0 z-20 bg-[#f3ecdf]/80 backdrop-blur-md border-b border-amber-900/10 shadow-sm rounded-t-[17px]">
+        <div class="max-w-6xl mx-auto px-4 md:px-8 py-4 flex items-center justify-between gap-4">
+            <div class="flex items-center gap-4">
+                <div class="h-12 w-12 rounded-full bg-white shadow-md flex items-center justify-center text-2xl text-amber-700 rotate-[-6deg]">
+                    📷
+                </div>
+                <div>
+                    <h1 class="font-hand text-4xl md:text-5xl leading-none text-amber-900 font-bold">Mis vacaciones</h1>
+                </div>
+            </div>
+            <span class="inline-flex items-center gap-2 rounded-full bg-white/80 px-4 py-2 text-xs font-semibold text-amber-900 shadow-sm">
+                <i class="fa-solid fa-camera"></i> 5 recuerdos
+            </span>
+        </div>
+    </header>
+
+    <!-- Main Content Area -->
+    <main class="relative z-10 flex-grow p-5 flex items-start justify-center">
+        <div class="max-w-6xl w-full mx-auto">
+
+            <p class="text-center font-hand text-2xl text-amber-900/70 mb-2 mt-2 md:hidden">Toca cada recuerdo para ampliarlo ✨</p>
+
+            <!-- The Collage Grid (ordenado por número: 1→5) -->
+            <div class="collage-grid">
+
+                <!-- 1.jpeg (destacada) -->
+                <div class="collage-item item-1" data-file="1.jpeg" data-caption="Foto 1" tabindex="0" role="button" aria-label="Foto 1, ampliar" onclick="openModal(0)">
+                    <div class="media-wrap">
+                        <img src="1.jpeg" alt="Foto 1" loading="lazy" draggable="false">
+                        <span class="expand-chip"><i class="fa-solid fa-expand"></i></span>
+                    </div>
+                    <div class="caption">Recuerdo #1</div>
+                </div>
+
+                <!-- 2.jpeg -->
+                <div class="collage-item item-2" data-file="2.jpeg" data-caption="Foto 2" tabindex="0" role="button" aria-label="Foto 2, ampliar" onclick="openModal(1)">
+                    <div class="media-wrap">
+                        <img src="2.jpeg" alt="Foto 2" loading="lazy" draggable="false">
+                        <span class="expand-chip"><i class="fa-solid fa-expand"></i></span>
+                    </div>
+                    <div class="caption">Recuerdo #2</div>
+                </div>
+
+                <!-- 3.mp4 (video) -->
+                <div class="collage-item item-3" data-file="3.mp4" data-caption="Video 3" tabindex="0" role="button" aria-label="Video 3, ampliar" onclick="openModal(2)">
+                    <div class="media-wrap">
+                        <video src="3.mp4" muted loop playsinline preload="metadata"></video>
+                        <div class="video-play"><i class="fa-solid fa-circle-play"></i></div>
+                        <span class="expand-chip"><i class="fa-solid fa-expand"></i></span>
+                    </div>
+                    <div class="caption">Recuerdo #3</div>
+                </div>
+
+                <!-- 4.jpeg -->
+                <div class="collage-item item-4" data-file="4.jpeg" data-caption="Foto 4" tabindex="0" role="button" aria-label="Foto 4, ampliar" onclick="openModal(3)">
+                    <div class="media-wrap">
+                        <img src="4.jpeg" alt="Foto 4" loading="lazy" draggable="false">
+                        <span class="expand-chip"><i class="fa-solid fa-expand"></i></span>
+                    </div>
+                    <div class="caption">Recuerdo #4</div>
+                </div>
+
+                <!-- 5.jpeg -->
+                <div class="collage-item item-5" data-file="5.jpeg" data-caption="Foto 5" tabindex="0" role="button" aria-label="Foto 5, ampliar" onclick="openModal(4)">
+                    <div class="media-wrap">
+                        <img src="5.jpeg" alt="Foto 5" loading="lazy" draggable="false">
+                        <span class="expand-chip"><i class="fa-solid fa-expand"></i></span>
+                    </div>
+                    <div class="caption">Recuerdo #5</div>
+                </div>
+
+            </div>
+        </div>
+    </main>
+
+    </div>
+
+    <!-- Fullscreen Modal Overlay -->
+    <div id="imageModal" class="fixed inset-0 bg-black/85 z-50 hidden opacity-0 flex-col items-center justify-center p-4">
+
+        <!-- Barra de progreso -->
+        <div class="absolute top-0 left-0 right-0 h-1 bg-white/15 z-50">
+            <div id="modalProgress" class="h-full bg-amber-400 transition-all duration-500" style="width:20%"></div>
+        </div>
+
+        <!-- Información superior -->
+        <div class="absolute top-5 left-5 md:top-7 md:left-7 text-white z-50 pointer-events-none">
+            <div id="modalName" class="font-hand text-3xl md:text-4xl leading-none">Foto 1</div>
+            <div class="text-xs text-white/50 mt-1 flex items-center gap-2">
+                <span id="modalFile">1.jpeg</span>
+                <span>·</span>
+                <span id="modalCounter">1 / 5</span>
+            </div>
+        </div>
+
+        <!-- Cerrar -->
+        <button onclick="closeModal()" aria-label="Cerrar" class="modal-btn absolute top-5 right-5 md:top-7 md:right-7 w-11 h-11 text-xl z-50">
+            <i class="fa-solid fa-xmark"></i>
+        </button>
+
+        <!-- Anterior / Siguiente -->
+        <button onclick="navigate(-1, event)" aria-label="Anterior" class="modal-btn absolute left-3 md:left-8 top-1/2 -translate-y-1/2 w-11 h-11 text-lg z-50">
+            <i class="fa-solid fa-chevron-left"></i>
+        </button>
+
+        <button onclick="navigate(1, event)" aria-label="Siguiente" class="modal-btn absolute right-3 md:right-8 top-1/2 -translate-y-1/2 w-11 h-11 text-lg z-50">
+            <i class="fa-solid fa-chevron-right"></i>
+        </button>
+
+        <!-- Controles inferiores -->
+        <div class="absolute bottom-5 left-1/2 -translate-x-1/2 flex gap-3 z-50">
+            <a id="modalDownload" href="#" download aria-label="Descargar" class="modal-btn w-11 h-11 text-lg">
+                <i class="fa-solid fa-download"></i>
+            </a>
+            <button id="btnFullscreen" aria-label="Pantalla completa" class="modal-btn w-11 h-11 text-lg">
+                <i class="fa-solid fa-expand"></i>
+            </button>
+        </div>
+
+        <!-- Contenido maximizado -->
+        <div class="relative w-full h-full flex items-center justify-center" onclick="closeModal()">
+            <img id="modalImage" src="" alt="Imagen maximizada" class="rounded-lg scale-95" onclick="event.stopPropagation();" draggable="false">
+            <video id="modalVideo" controls playsinline class="rounded-lg scale-95 hidden" onclick="event.stopPropagation();"></video>
+        </div>
+    </div>
+
+    <!-- JavaScript for Interactivity -->
+    <script>
+        const modal = document.getElementById('imageModal');
+        const modalImg = document.getElementById('modalImage');
+        const modalVideo = document.getElementById('modalVideo');
+        const modalProgress = document.getElementById('modalProgress');
+        const modalName = document.getElementById('modalName');
+        const modalFile = document.getElementById('modalFile');
+        const modalCounter = document.getElementById('modalCounter');
+        const modalDownload = document.getElementById('modalDownload');
+
+        const allItems = Array.from(document.querySelectorAll('.collage-item'));
+        const total = allItems.length;
+        let currentIndex = 0;
+
+        /* ---------- Animación de entrada (reveal al hacer scroll) ---------- */
+        const io = new IntersectionObserver((entries) => {
+            entries.forEach((entry) => {
+                if (entry.isIntersecting) {
+                    const item = entry.target;
+                    item.classList.add('in-view');
+                    const onTrans = (e) => {
+                        if (e.propertyName === 'opacity') {
+                            item.classList.add('done');
+                            item.removeEventListener('transitionend', onTrans);
+                        }
+                    };
+                    item.addEventListener('transitionend', onTrans);
+                    io.unobserve(item);
+                }
+            });
+        }, { threshold: 0.15 });
+
+        allItems.forEach((item) => io.observe(item));
+
+        /* Teclado sobre tarjetas (accesibilidad) */
+        allItems.forEach((item, i) => {
+            item.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault();
+                    openModal(i);
+                }
+            });
+        });
+
+        /* Previsualización silenciosa del video en hover */
+        document.querySelectorAll('.media-wrap video').forEach((v) => {
+            v.addEventListener('mouseenter', () => v.play().catch(() => {}));
+            v.addEventListener('mouseleave', () => v.pause());
+        });
+
+        /* ---------- Modal ---------- */
+        function mediaOf(item) {
+            return item.querySelector('.media-wrap img, .media-wrap video');
+        }
+
+        function openModal(index) {
+            currentIndex = (index + total) % total;
+            const item = allItems[currentIndex];
+            const media = mediaOf(item);
+            const isVideo = media.tagName === 'VIDEO';
+
+            // Configurar medio
+            if (isVideo) {
+                modalVideo.src = media.currentSrc || media.src;
+                modalVideo.play().catch(() => {});
+                modalImg.classList.add('hidden');
+                modalVideo.classList.remove('hidden');
+            } else {
+                modalVideo.pause();
+                modalVideo.removeAttribute('src');
+                modalVideo.classList.add('hidden');
+                modalImg.classList.remove('hidden');
+                modalImg.src = media.src;
+                modalImg.alt = media.alt;
+            }
+
+            // Info + progreso + descarga
+            modalName.textContent = item.dataset.caption || 'Recuerdo';
+            modalFile.textContent = decodeURIComponent(item.dataset.file);
+            modalCounter.textContent = (currentIndex + 1) + ' / ' + total;
+            modalProgress.style.width = ((currentIndex + 1) / total * 100) + '%';
+            modalDownload.href = media.currentSrc || media.src;
+            modalDownload.setAttribute('download', decodeURIComponent(item.dataset.file));
+
+            // Mostrar modal + animación
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+            setTimeout(() => {
+                modal.classList.remove('opacity-0');
+                if (isVideo) {
+                    modalVideo.classList.remove('scale-95');
+                    modalVideo.classList.add('scale-100');
+                } else {
+                    modalImg.classList.remove('scale-95');
+                    modalImg.classList.add('scale-100');
+                }
+            }, 10);
+
+            document.body.style.overflow = 'hidden';
+        }
+
+        function closeModal() {
+            modal.classList.add('opacity-0');
+            modalImg.classList.remove('scale-100');
+            modalImg.classList.add('scale-95');
+            modalVideo.pause();
+            modalVideo.classList.add('scale-95');
+            modalVideo.classList.remove('scale-100');
+
+            setTimeout(() => {
+                modal.classList.add('hidden');
+                modal.classList.remove('flex');
+                modalImg.src = '';
+                modalVideo.removeAttribute('src');
+                document.body.style.overflow = 'auto';
+            }, 300);
+        }
+
+        function navigate(direction, event) {
+            if (event) event.stopPropagation();
+            const next = (currentIndex + direction + total) % total;
+            const item = allItems[next];
+            const media = mediaOf(item);
+            const isVideo = media.tagName === 'VIDEO';
+
+            // Animación de salida
+            modalImg.style.opacity = '0';
+            modalImg.style.transform = direction > 0 ? 'translateX(24px) scale(.95)' : 'translateX(-24px) scale(.95)';
+            modalVideo.style.opacity = '0';
+            modalVideo.style.transform = direction > 0 ? 'translateX(24px) scale(.95)' : 'translateX(-24px) scale(.95)';
+            modalVideo.pause();
+
+            setTimeout(() => {
+                openModal(next);
+                modalImg.style.opacity = '1';
+                modalImg.style.transform = 'translateX(0) scale(1)';
+                modalVideo.style.opacity = '1';
+                modalVideo.style.transform = 'translateX(0) scale(1)';
+            }, 160);
+        }
+
+        /* ---------- Pantalla completa ---------- */
+        const btnFullscreen = document.getElementById('btnFullscreen');
+        btnFullscreen.addEventListener('click', (e) => {
+            e.stopPropagation();
+            if (!document.fullscreenElement) {
+                if (modal.requestFullscreen) modal.requestFullscreen();
+            } else {
+                document.exitFullscreen().catch(() => {});
+            }
+        });
+
+        document.addEventListener('fullscreenchange', () => {
+            const on = document.fullscreenElement !== null;
+            btnFullscreen.innerHTML = on ? '<i class="fa-solid fa-compress"></i>' : '<i class="fa-solid fa-expand"></i>';
+        });
+
+        /* ---------- Gestos táctiles (swipe) ---------- */
+        let touchX = 0;
+        let touchY = 0;
+        modal.addEventListener('touchstart', (e) => {
+            touchX = e.touches[0].clientX;
+            touchY = e.touches[0].clientY;
+        }, { passive: true });
+
+        modal.addEventListener('touchend', (e) => {
+            const t = e.changedTouches[0];
+            const dx = t.clientX - touchX;
+            const dy = t.clientY - touchY;
+            const onVideo = e.target === modalVideo;
+            if (Math.abs(dx) > 50 && Math.abs(dx) > Math.abs(dy) * 1.2 && (!onVideo || modalVideo.paused)) {
+                navigate(dx < 0 ? 1 : -1, null);
+            }
+        }, { passive: true });
+
+        /* ---------- Teclado ---------- */
+        document.addEventListener('keydown', (event) => {
+            if (modal.classList.contains('hidden')) return;
+            if (event.key === 'Escape') {
+                if (document.fullscreenElement) {
+                    document.exitFullscreen().catch(() => {});
+                } else {
+                    closeModal();
+                }
+            } else if (event.key === 'ArrowRight') {
+                navigate(1, null);
+            } else if (event.key === 'ArrowLeft') {
+                navigate(-1, null);
+            }
+        });
+    </script>
+</body>
+</html>
